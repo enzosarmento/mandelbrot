@@ -16,5 +16,8 @@ main.o: main.c mandelbrot.h
 mandelbrot.o: mandelbrot.c mandelbrot.h
 	$(CC) $(CFLAGS) -c mandelbrot.c
 
+run:
+	./$(TARGET)
+
 clean:
 	rm -f *.o $(TARGET) mandelbrot.bin mandelbrot.pgm
