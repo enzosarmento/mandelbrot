@@ -1,13 +1,8 @@
 #include "mandelbrot.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 int main() {
-    int32_t *iterations = (int32_t *)malloc(WIDTH * HEIGHT * sizeof(int32_t));
-    if (!iterations) {
-        fprintf(stderr, "Erro de alocacao de memoria.\n");
-        return 1;
-    }
+    int32_t *iterations = createMatrix();
 
     double re_step = (RE_MAX - RE_MIN) / (WIDTH - 1);
     double im_step = (IM_MAX - IM_MIN) / (HEIGHT - 1);

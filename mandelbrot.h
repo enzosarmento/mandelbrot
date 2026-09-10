@@ -2,6 +2,7 @@
 #define MANDELBROT_H
 
 #include <stdint.h>
+#include <stdlib.h>
 
 #define WIDTH 4096
 #define HEIGHT 4096
@@ -12,6 +13,7 @@
 #define IM_MIN -1.5
 #define IM_MAX 1.5
 
+int32_t *createMatrix();
 int compute_pixel(double c_re, double c_im, int max_iter);
 void save_bin(const char *filename, int32_t *iterations, int width, int height);
 void save_pgm(const char *filename, int32_t *iterations, int width, int height, int max_iter);

@@ -1,6 +1,16 @@
 #include "mandelbrot.h"
 #include <stdio.h>
 
+
+int32_t *createMatrix() {
+    int32_t *iterations = (int32_t *)malloc(WIDTH * HEIGHT * sizeof(int32_t));
+    if (!iterations) {
+        fprintf(stderr, "Erro de alocacao de memoria.\n");
+        return NULL;
+    }
+    return iterations;
+}
+
 int compute_pixel(double c_re, double c_im, int max_iter) {
     // Otimização do Cardióide e Bulbo
     double q = (c_re - 0.25) * (c_re - 0.25) + c_im * c_im;
