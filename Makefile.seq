@@ -1,0 +1,42 @@
+CC = gcc
+CFLAGS = -Wall -Wextra -O3 -march=native -ffast-math -fopenmp
+LDLIBS = -lm
+
+TARGET = mandelbrot_seq
+
+OBJS = main.o mandelbrot.o
+OUTPUT_DIR = output
+
+.PHONY: all run run-seahorse check clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
+
+main.o: main.c mandelbrot.h
+	$(CC) $(CFLAGS) -c main.c
+
+mandelbrot.o: mandelbrot.c mandelbrot.h
+	$(CC) $(CFLAGS) -c mandelbrot.c
+
+ARGS ?=
+
+run: $(TARGET)
+	@mkdir -p $(OUTPUT_DIR)
+	./$(TARGET) $(ARGS)
+	@mv -f mandelbrot.bin mandelbrot.ppm $(OUTPUT_DIR)/
+	@echo "Arquivos de saída salvos em $(OUTPUT_DIR)/"
+
+run-seahorse: $(TARGET)
+	@mkdir -p $(OUTPUT_DIR)
+	./$(TARGET) --seahorse $(ARGS)
+	@mv -f mandelbrot.bin mandelbrot.ppm $(OUTPUT_DIR)/
+	@echo "Arquivos de saída salvos em $(OUTPUT_DIR)/"
+
+check: $(TARGET)
+	@$(MAKE) -f Makefile.openmp all
+	@THREADS=$(T) ./scripts/verify_correctness.sh $(ARGS)
+
+clean:
+	rm -f *.o $(TARGET) $(OUTPUT_DIR)/mandelbrot.bin $(OUTPUT_DIR)/mandelbrot.ppm mandelbrot.bin mandelbrot.ppm

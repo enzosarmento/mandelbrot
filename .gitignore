@@ -1,0 +1,13 @@
+
+*.o
+mandelbrot_seq
+mandelbrot_openmp
+mandelbrot_runtime
+main_runtime.o
+
+*.bin
+*.pgm
+*.ppm
+*.pdf
+
+output/.gitkeep
