@@ -86,9 +86,33 @@ RUNS=5 ./scripts/benchmark.sh
 MODE_ARGS="--seahorse" RUNS=5 ./scripts/benchmark.sh
 ```
 
-Os resultados padrão são salvos em `results/benchmark_padrao.csv`; os do Seahorse, em `results/benchmark_seahorse.csv`. O ambiente (sistema, compilador e CPU) é registrado em `results/environment.txt`.
+Os resultados padrão são salvos em `results/benchmark_padrao.csv`; os do Seahorse, em `results/benchmark_seahorse.csv`. Todos os benchmarks registram o ambiente e sua configuração em `results/environment.txt`.
 
 Por padrão, o benchmark executa todas as contagens de threads de 2 até o número de CPUs lógicas disponíveis. É possível restringir os testes, mantendo esses limites, por exemplo: `THREADS="2 4 8" RUNS=5 ./scripts/benchmark.sh`. Ajuste também `SCHEDULES`, `CHUNKS`, `RUNS` e `MODE_ARGS` conforme o experimento. Para a análise de escalabilidade fraca, execute o script em resoluções crescentes, por exemplo com `MODE_ARGS="--width 8192 --height 8192"`.
+
+O comando com `MODE_ARGS="--seahorse"` já é a comparação de escalonamento no caso de estresse: avalia `static`, `dynamic` e `guided`, os chunks configurados e as contagens de threads selecionadas. Seus resultados são mantidos separadamente em `results/benchmark_seahorse.csv`.
+
+### Escalabilidade fraca
+
+O mesmo `benchmark.sh` também executa a escalabilidade fraca. Ele avalia o desempenho tanto no modo padrão quanto no modo do Vale dos Cavalos-Marinhos (`padrao` e `seahorse`). As resoluções avaliadas incluem `4096²`, `8192²` e `16384²`. A configuração ideal associa respectivamente `2`, `8` e `32` threads; se o computador não tiver threads suficientes, o último caso usa o máximo disponível. Esse limite fica registrado no `environment.txt`, pois o caso deixa de manter exatamente o mesmo trabalho por thread.
+
+```bash
+BENCHMARK_TYPE=weak RUNS=5 ./scripts/benchmark.sh
+```
+
+O resultado consolidado é salvo em `results/benchmark_escalabilidade_fraca.csv`, contendo a coluna `modo` para diferenciar as execuções padrão e do vale dos cavalos-marinhos. Para executar apenas um dos modos, utilize `WEAK_MODES` (ou `MODE_ARGS`):
+
+```bash
+BENCHMARK_TYPE=weak WEAK_MODES="seahorse" RUNS=5 ./scripts/benchmark.sh
+```
+
+Para definir explicitamente os casos de resolução e threads, use `WEAK_CASES` no formato `resolução:threads`:
+
+```bash
+BENCHMARK_TYPE=weak WEAK_CASES="4096:2 8192:8 16384:12" RUNS=5 ./scripts/benchmark.sh
+```
+
+O benchmark usa, por padrão, `dynamic` com chunk `1`, a melhor configuração observada nos testes. Para estudar outra combinação, defina `WEAK_SCHEDULES` e `WEAK_CHUNKS`.
 
 ## Arquivos gerados
 

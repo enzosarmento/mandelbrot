@@ -11,3 +11,8 @@ main_runtime.o
 *.pdf
 
 output/.gitkeep
+
+apresentacao.md
+.venv/
+__pycache__/
+*.pyc

@@ -46,3 +46,46 @@ Vulnerability Srbds:                     Not affected
 Vulnerability Tsa:                       Mitigation; Clear CPU buffers
 Vulnerability Tsx async abort:           Not affected
 Vulnerability Vmscape:                   Mitigation; IBPB before exit to userspace
+
+=== Benchmark: escalabilidade fraca ===
+Data: 2026-09-19T22:24:01-03:00
+Casos (resolução:threads): 4096:2 8192:8 16384:12
+Políticas: dynamic
+Chunks: 1
+Máximo de threads disponível: 12
+Observação: casos limitados pelo hardware não preservam exatamente o trabalho por thread.
+
+=== Benchmark: escalabilidade fraca ===
+Data: 2026-09-19T22:33:05-03:00
+Casos (resolução:threads): 4096:2 8192:8 16384:12
+Políticas: dynamic
+Chunks: 1
+Máximo de threads disponível: 12
+Observação: casos limitados pelo hardware não preservam exatamente o trabalho por thread.
+
+=== Benchmark: escalabilidade fraca ===
+Data: 2026-09-19T22:45:32-03:00
+Modos: padrao seahorse
+Casos (resolução:threads): 4096:2 8192:8 16384:12
+Políticas: dynamic
+Chunks: 1
+Máximo de threads disponível: 12
+Observação: casos limitados pelo hardware não preservam exatamente o trabalho por thread.
+
+=== Benchmark: escalabilidade fraca ===
+Data: 2026-09-19T22:50:58-03:00
+Modos: seahorse
+Casos (resolução:threads): 4096:2 8192:8 16384:12
+Políticas: dynamic
+Chunks: 1
+Máximo de threads disponível: 12
+Observação: casos limitados pelo hardware não preservam exatamente o trabalho por thread.
+
+=== Benchmark: escalabilidade fraca ===
+Data: 2026-09-20T11:31:09-03:00
+Modos: padrao seahorse
+Casos (resolução:threads): 4096:2 8192:8 16384:12
+Políticas: dynamic
+Chunks: 1
+Máximo de threads disponível: 12
+Observação: casos limitados pelo hardware não preservam exatamente o trabalho por thread.
