@@ -1,0 +1,45 @@
+export MPICH_CC ?= gcc
+
+MPICC ?= mpicc
+MPIEXEC ?= mpirun
+CFLAGS = -Wall -Wextra -O3 -march=native -ffast-math
+LDLIBS = -lm
+
+TARGET = mandelbrot_mpi
+
+OBJS = main_mpi.o mandelbrot.o
+OUTPUT_DIR = output
+NP ?= 4
+
+.PHONY: all run run-seahorse check clean
+
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(MPICC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
+
+main_mpi.o: main_mpi.c mandelbrot.h
+	$(MPICC) $(CFLAGS) -c main_mpi.c
+
+mandelbrot.o: mandelbrot.c mandelbrot.h
+	$(MPICC) $(CFLAGS) -c mandelbrot.c
+
+ARGS ?=
+
+run: $(TARGET)
+	@mkdir -p $(OUTPUT_DIR)
+	$(MPIEXEC) -np $(NP) ./$(TARGET) $(ARGS)
+	@mv -f mandelbrot_mpi.bin mandelbrot_mpi.ppm $(OUTPUT_DIR)/
+	@echo "Arquivos de saída salvos em $(OUTPUT_DIR)/"
+
+run-seahorse: $(TARGET)
+	@mkdir -p $(OUTPUT_DIR)
+	$(MPIEXEC) -np $(NP) ./$(TARGET) --seahorse $(ARGS)
+	@mv -f mandelbrot_mpi.bin mandelbrot_mpi.ppm $(OUTPUT_DIR)/
+	@echo "Arquivos de saída salvos em $(OUTPUT_DIR)/"
+
+check: $(TARGET)
+	@NP=$(NP) ./scripts/verify_mpi.sh $(ARGS)
+
+clean:
+	rm -f *.o $(TARGET) $(OUTPUT_DIR)/mandelbrot_mpi.bin $(OUTPUT_DIR)/mandelbrot_mpi.ppm mandelbrot_mpi.bin mandelbrot_mpi.ppm

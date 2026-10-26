@@ -1,6 +1,5 @@
 #include "mandelbrot.h"
 #include <math.h>
-#include <stdio.h>
 
 
 int32_t *createMatrix(int width, int height) {

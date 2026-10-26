@@ -2,6 +2,7 @@
 *.o
 mandelbrot_seq
 mandelbrot_openmp
+mandelbrot_mpi
 mandelbrot_runtime
 main_runtime.o
 
@@ -15,3 +16,4 @@ apresentacao.md
 .venv/
 __pycache__/
 *.pyc
+results/tabelas/

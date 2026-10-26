@@ -1,10 +1,11 @@
-# Conjunto de Mandelbrot com OpenMP
+# Conjunto de Mandelbrot com OpenMP e MPI
 
-Implementação em C para calcular e visualizar o conjunto de Mandelbrot. O projeto possui uma versão sequencial e outra paralela com OpenMP, além de um modo de aproximação para o Vale dos Cavalos-Marinhos.
+Implementação em C para calcular e visualizar o conjunto de Mandelbrot. O projeto possui versões sequencial, paralela em memória compartilhada com OpenMP e paralela distribuída com MPI, além de um modo de aproximação para o Vale dos Cavalos-Marinhos.
 
 ## Requisitos
 
 - GCC com suporte a OpenMP;
+- MPI (MPICH ou OpenMPI);
 - `make`;
 
 ## Compilação
@@ -15,13 +16,19 @@ Compile a versão sequencial:
 make -f Makefile.seq
 ```
 
-Compile a versão paralela:
+Compile a versão paralela OpenMP:
 
 ```bash
 make -f Makefile.openmp
 ```
 
-Os executaveis gerados são `mandelbrot_seq` e `mandelbrot_openmp`.
+Compile a versão paralela MPI:
+
+```bash
+make -f Makefile.mpi
+```
+
+Os executáveis gerados são `mandelbrot_seq`, `mandelbrot_openmp` e `mandelbrot_mpi`.
 
 ## Execução
 
@@ -42,7 +49,7 @@ make -f Makefile.seq run-seahorse ARGS="--width 1920 --height 1080"
 
 ### Versão OpenMP
 
-O primeiro argumento sem opcao define a quantidade de threads. Tambem e possivel usar `--threads`.
+O primeiro argumento sem opção define a quantidade de threads. Também é possível usar `--threads`.
 
 ```bash
 ./mandelbrot_openmp 8
@@ -57,7 +64,7 @@ make -f Makefile.openmp run T=8
 make -f Makefile.openmp run-seahorse T=8 ARGS="--width 1920 --height 1080"
 ```
 
-Opções aceitas:
+Opções aceitas na versão OpenMP:
 
 - `-s`, `--seahorse`: aproxima a região do Vale dos Cavalos-Marinhos e usa 5000 iterações;
 - `-t N`, `--threads N`: define o número de threads (OpenMP);
@@ -66,53 +73,96 @@ Opções aceitas:
 - `--schedule POLITICA`: escolhe `static`, `dynamic` ou `guided` (OpenMP);
 - `--chunk N`: define o tamanho de chunk da política de escalonamento.
 
-A versão OpenMP sempre mostra as estatísticas detalhadas de cada thread.
+### Versão MPI
+
+A versão MPI utiliza as diretrizes e boas práticas abordadas nas aulas de processamento distribuído (Aulas 10 e 11) e no material de *Scatter e Gather com o Filtro Gaussiano*:
+
+- **Entrada e difusão (E/S)**: O processo de rank 0 recebe e valida os parâmetros de linha de comando e os difunde para todos os processos via `MPI_Bcast`.
+- **Sem otimização de simetria**: Conforme especificado, todas as linhas são computadas diretamente, garantindo consistência em qualquer partição de domínio.
+- **Decomposição em faixas de linhas (Horizontal Slices)**:
+  - Se a altura $N$ for divisível pelo número de processos $P$, utiliza-se `MPI_Gather` com blocos contíguos de tamanho igual $N/P$;
+  - Se $N$ não for perfeitamente divisível por $P$, utiliza-se `MPI_Gatherv` com vetores de contagens (`recvcounts`) e deslocamentos (`displs`), distribuindo o resto entre os processos iniciais.
+- **Distribuição cíclica (opcional)**: Suporte à distribuição *round-robin* de linhas (`--cyclic`), demonstrando como mitigar o desbalanceamento inerente às faixas contíguas em fractais.
+- **Métricas e reduções globais**: Usa `MPI_Reduce` (`MPI_MAX`, `MPI_MIN`, `MPI_SUM`) e `MPI_Gather` para aferir e exibir $T_{max}$, $T_{min}$, $T_{avg}$, Fator de Balanceamento ($FLB = (T_{max}-T_{min})/T_{max}$) e detalhes individuais de cada processo.
+
+Execução direta com `mpirun` / `mpiexec`:
+
+```bash
+mpirun -np 4 ./mandelbrot_mpi
+mpirun -np 4 ./mandelbrot_mpi --seahorse
+mpirun -np 4 ./mandelbrot_mpi --width 1920 --height 1080
+mpirun -np 4 ./mandelbrot_mpi --cyclic
+```
+
+Com Make:
+
+```bash
+make -f Makefile.mpi run NP=4
+make -f Makefile.mpi run-seahorse NP=4 ARGS="--width 1920 --height 1080"
+```
+
+Opções aceitas na versão MPI:
+
+- `-s`, `--seahorse`: aproxima a região do Vale dos Cavalos-Marinhos (5000 iterações);
+- `-w N`, `--width N`: largura da imagem;
+- `-h N`, `--height N`: altura da imagem;
+- `-b`, `--block`: distribuição padrão em faixas de linhas contíguas (`MPI_Gather` / `MPI_Gatherv`);
+- `-c`, `--cyclic`: distribuição cíclica (round-robin) para balanceamento de carga;
+- `--help`: exibe o resumo de opções.
 
 ## Corretude e benchmarks
 
-Compare automaticamente as matrizes sequencial e paralela com os mesmos parâmetros:
+### Verificação de corretude
+
+Compare automaticamente as matrizes sequencial e OpenMP:
 
 ```bash
 make -f Makefile.seq check T=4 ARGS="--width 4096 --height 4096"
 make -f Makefile.seq check T=4 ARGS="--seahorse --width 4096 --height 4096"
 ```
 
+Valide a corretude da versão MPI (compara 1 processo vs $NP$ processos e contra a referência sequencial):
+
+```bash
+make -f Makefile.mpi check NP=4 ARGS="--width 4096 --height 4096"
+make -f Makefile.mpi check NP=4 ARGS="--seahorse --width 4096 --height 4096"
+```
+
 O comando falha se os arquivos `.bin` não forem idênticos e imprime seus hashes SHA-256.
 
-Para coletar tempos, Speedup, Eficiência e Fator de Balanceamento para as políticas e chunks avaliados, execute:
+### Benchmarks OpenMP
+
+Para coletar tempos, Speedup, Eficiência e Fator de Balanceamento para as políticas e chunks OpenMP:
 
 ```bash
 RUNS=5 ./scripts/benchmark.sh
 MODE_ARGS="--seahorse" RUNS=5 ./scripts/benchmark.sh
 ```
 
-Os resultados padrão são salvos em `results/benchmark_padrao.csv`; os do Seahorse, em `results/benchmark_seahorse.csv`. Todos os benchmarks registram o ambiente e sua configuração em `results/environment.txt`.
+Os resultados padrão são salvos em `results/benchmark_padrao.csv`; os do Seahorse, em `results/benchmark_seahorse.csv`.
 
-Por padrão, o benchmark executa todas as contagens de threads de 2 até o número de CPUs lógicas disponíveis. É possível restringir os testes, mantendo esses limites, por exemplo: `THREADS="2 4 8" RUNS=5 ./scripts/benchmark.sh`. Ajuste também `SCHEDULES`, `CHUNKS`, `RUNS` e `MODE_ARGS` conforme o experimento. Para a análise de escalabilidade fraca, execute o script em resoluções crescentes, por exemplo com `MODE_ARGS="--width 8192 --height 8192"`.
+### Benchmarks MPI
 
-O comando com `MODE_ARGS="--seahorse"` já é a comparação de escalonamento no caso de estresse: avalia `static`, `dynamic` e `guided`, os chunks configurados e as contagens de threads selecionadas. Seus resultados são mantidos separadamente em `results/benchmark_seahorse.csv`.
-
-### Escalabilidade fraca
-
-O mesmo `benchmark.sh` também executa a escalabilidade fraca. Ele avalia o desempenho tanto no modo padrão quanto no modo do Vale dos Cavalos-Marinhos (`padrao` e `seahorse`). As resoluções avaliadas incluem `4096²`, `8192²` e `16384²`. A configuração ideal associa respectivamente `2`, `8` e `32` threads; se o computador não tiver threads suficientes, o último caso usa o máximo disponível. Esse limite fica registrado no `environment.txt`, pois o caso deixa de manter exatamente o mesmo trabalho por thread.
+Para coletar métricas de escalabilidade forte e balanceamento de carga comparando as estratégias de faixas contíguas e cíclica no MPI:
 
 ```bash
-BENCHMARK_TYPE=weak RUNS=5 ./scripts/benchmark.sh
+RUNS=5 PROCESSES="1 2 4 8" ./scripts/benchmark_mpi.sh
+MODE_ARGS="--seahorse" RUNS=5 PROCESSES="1 2 4 8" ./scripts/benchmark_mpi.sh
 ```
 
-O resultado consolidado é salvo em `results/benchmark_escalabilidade_fraca.csv`, contendo a coluna `modo` para diferenciar as execuções padrão e do vale dos cavalos-marinhos. Para executar apenas um dos modos, utilize `WEAK_MODES` (ou `MODE_ARGS`):
+Os resultados são gravados em `results/benchmark_mpi_padrao.csv` e `results/benchmark_mpi_seahorse.csv`.
 
-```bash
-BENCHMARK_TYPE=weak WEAK_MODES="seahorse" RUNS=5 ./scripts/benchmark.sh
-```
+As métricas seguem a Aula 03: `S(n,p) = T(n) / T(n,p)`, `E(n,p) = S(n,p) / p` e
+`FLB = (T_max - T_min) / T_max` (0 é o balanceamento ideal). `T(n,p)` é cronometrado
+entre barreiras MPI, do início comum ao término do último processo; a E/S dos arquivos
+não entra nessa medida. Após esta atualização, gere novamente os CSVs MPI e OpenMP,
+pois valores antigos de `fator_balanceamento` usavam outra definição.
 
-Para definir explicitamente os casos de resolução e threads, use `WEAK_CASES` no formato `resolução:threads`:
-
-```bash
-BENCHMARK_TYPE=weak WEAK_CASES="4096:2 8192:8 16384:12" RUNS=5 ./scripts/benchmark.sh
-```
-
-O benchmark usa, por padrão, `dynamic` com chunk `1`, a melhor configuração observada nos testes. Para estudar outra combinação, defina `WEAK_SCHEDULES` e `WEAK_CHUNKS`.
+Nesta máquina, os 6 núcleos físicos fornecem 12 contextos lógicos por SMT. Portanto,
+executar até 12 processos/threads não é *oversubscription* e pode melhorar o tempo de
+execução; a eficiência continua sendo calculada com `p` igual ao número de processos ou
+threads efetivamente usados. A marca em `p=6` nos gráficos é apenas informativa, não um
+limite de eficiência nem uma evidência de perda automática de desempenho.
 
 ## Arquivos gerados
 
@@ -126,6 +176,7 @@ Cada execução salva dois arquivos:
 ```bash
 make -f Makefile.seq clean
 make -f Makefile.openmp clean
+make -f Makefile.mpi clean
 ```
 
 ## Transparência sobre uso de IA

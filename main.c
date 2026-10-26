@@ -4,6 +4,7 @@ int main(int argc, char *argv[]) {
     int width = WIDTH;
     int height = HEIGHT;
     int is_seahorse = 0;
+    int no_symmetry = 0;
 
     double re_min, re_max, im_min, im_max, re_step, im_step;
     int max_iter;
@@ -15,6 +16,8 @@ int main(int argc, char *argv[]) {
             if (i + 1 < argc) width = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--height") == 0) {
             if (i + 1 < argc) height = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "--no-symmetry") == 0) {
+            no_symmetry = 1;
         }
     }
 
@@ -32,7 +35,7 @@ int main(int argc, char *argv[]) {
     }
 
     int is_symmetric = 0;
-    if (im_max > 0 && (im_min + im_max) > -0.000001 && (im_min + im_max) < 0.000001) {
+    if (!no_symmetry && im_max > 0 && (im_min + im_max) > -0.000001 && (im_min + im_max) < 0.000001) {
         is_symmetric = 1;
     }
 

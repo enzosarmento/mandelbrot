@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
         t_sum += thread_times[t];
     }
     double t_avg = t_sum / num_threads;
-    double lbf = (t_max > 0.0) ? (t_avg / t_max) : 1.0;
+    double lbf = (t_max > 0.0) ? ((t_max - t_min) / t_max) : 0.0;
     double imbalance_ratio = (t_avg > 0.0) ? (t_max / t_avg) : 1.0;
 
     printf("=== RESUMO DA EXECUCAO (OPENMP) ===\n");
@@ -136,7 +136,8 @@ int main(int argc, char *argv[]) {
     printf("Tempo Thread Max (T_max): %.6f segundos\n", t_max);
     printf("Tempo Thread Min (T_min): %.6f segundos\n", t_min);
     printf("Tempo Thread Medio (T_avg): %.6f segundos\n", t_avg);
-    printf("Fator de Balanceamento (T_avg / T_max): %.4f (%.2f%%)\n", lbf, lbf * 100.0);
+    printf("Fator de Balanceamento (FLB = (T_max - T_min) / T_max): %.4f (%.2f%%; 0%% e ideal)\n",
+           lbf, lbf * 100.0);
     printf("Razao de Desbalanceamento (T_max / T_avg): %.4f\n", imbalance_ratio);
     if (t_min > 0.0) {
         printf("Razao T_max / T_min: %.4f\n", t_max / t_min);
