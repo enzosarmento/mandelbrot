@@ -2,9 +2,10 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O3 -march=native -ffast-math -fopenmp
 LDLIBS = -lm
 
-TARGET = mandelbrot_openmp
+TARGET = bin/mandelbrot_openmp
 
-OBJS = main_openmp.o mandelbrot.o
+BUILD_DIR = build/openmp
+OBJS = $(BUILD_DIR)/main_openmp.o $(BUILD_DIR)/mandelbrot.o
 OUTPUT_DIR = output
 T ?= 4
 
@@ -13,13 +14,16 @@ T ?= 4
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
+	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
 
-main_openmp.o: main_openmp.c mandelbrot.h
-	$(CC) $(CFLAGS) -c main_openmp.c
+$(BUILD_DIR)/main_openmp.o: src/main_openmp.c include/mandelbrot.h
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
-mandelbrot.o: mandelbrot.c mandelbrot.h
-	$(CC) $(CFLAGS) -c mandelbrot.c
+$(BUILD_DIR)/mandelbrot.o: src/mandelbrot.c include/mandelbrot.h
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -Iinclude -c $< -o $@
 
 ARGS ?=
 
@@ -36,4 +40,5 @@ run-seahorse: $(TARGET)
 	@echo "Arquivos de saída salvos em $(OUTPUT_DIR)/"
 
 clean:
-	rm -f *.o $(TARGET) $(OUTPUT_DIR)/mandelbrot_openmp.bin $(OUTPUT_DIR)/mandelbrot_openmp.ppm mandelbrot_openmp.bin mandelbrot_openmp.ppm
+	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -f $(OUTPUT_DIR)/mandelbrot_openmp.bin $(OUTPUT_DIR)/mandelbrot_openmp.ppm mandelbrot_openmp.bin mandelbrot_openmp.ppm

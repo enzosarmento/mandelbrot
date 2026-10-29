@@ -11,8 +11,8 @@ make -C "$ROOT_DIR" -f Makefile.openmp all >/dev/null
 
 (
     cd "$TEMP_DIR"
-    "$ROOT_DIR/mandelbrot_seq" "$@" >/dev/null
-    "$ROOT_DIR/mandelbrot_openmp" "$THREADS" "$@" >/dev/null
+    "$ROOT_DIR/bin/mandelbrot_seq" "$@" >/dev/null
+    "$ROOT_DIR/bin/mandelbrot_openmp" "$THREADS" "$@" >/dev/null
 
     if ! cmp -s mandelbrot.bin mandelbrot_openmp.bin; then
         echo "ERRO: as matrizes binárias diferem." >&2

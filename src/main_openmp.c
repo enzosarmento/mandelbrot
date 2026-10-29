@@ -6,6 +6,7 @@ int main(int argc, char *argv[]) {
     int height = HEIGHT;
     int max_iter;
     int is_seahorse = 0;
+    int no_symmetry = 0;
     omp_sched_t schedule_kind = omp_sched_dynamic;
     const char *schedule_name = "dynamic";
     int chunk_size = 16;
@@ -15,6 +16,8 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "-s") == 0 || strcmp(argv[i], "--seahorse") == 0) {
             is_seahorse = 1;
+        } else if (strcmp(argv[i], "--no-symmetry") == 0) {
+            no_symmetry = 1;
         } else if (strcmp(argv[i], "-t") == 0 || strcmp(argv[i], "--threads") == 0) {
             if (i + 1 < argc) num_threads = atoi(argv[++i]);
         } else if (strcmp(argv[i], "-w") == 0 || strcmp(argv[i], "--width") == 0) {
@@ -67,7 +70,7 @@ int main(int argc, char *argv[]) {
     }
 
     int is_symmetric = 0;
-    if (im_max > 0 && (im_min + im_max) > -0.000001 && (im_min + im_max) < 0.000001) {
+    if (!no_symmetry && im_max > 0 && (im_min + im_max) > -0.000001 && (im_min + im_max) < 0.000001) {
         is_symmetric = 1;
     }
 

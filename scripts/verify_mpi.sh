@@ -13,11 +13,11 @@ make -C "$ROOT_DIR" -f Makefile.seq all >/dev/null
 (
     cd "$TEMP_DIR"
     # 1. Executa MPI com 1 processo (referencia)
-    mpirun -np 1 "$ROOT_DIR/mandelbrot_mpi" "$@" >/dev/null
+    mpirun -np 1 "$ROOT_DIR/bin/mandelbrot_mpi" "$@" >/dev/null
     mv mandelbrot_mpi.bin mandelbrot_mpi_np1.bin
 
     # 2. Executa MPI com NP processos
-    mpirun -np "$NP" "$ROOT_DIR/mandelbrot_mpi" "$@" >/dev/null
+    mpirun -np "$NP" "$ROOT_DIR/bin/mandelbrot_mpi" "$@" >/dev/null
 
     if ! cmp -s mandelbrot_mpi_np1.bin mandelbrot_mpi.bin; then
         echo "ERRO: as matrizes binárias diferem entre NP=1 e NP=$NP." >&2
@@ -30,10 +30,10 @@ make -C "$ROOT_DIR" -f Makefile.seq all >/dev/null
     # 3. Compara com a versao sequencial (sem simetria)
     case " $* " in
         *" -s "*|*" --seahorse "*)
-            "$ROOT_DIR/mandelbrot_seq" "$@" >/dev/null
+            "$ROOT_DIR/bin/mandelbrot_seq" "$@" >/dev/null
             ;;
         *)
-            "$ROOT_DIR/mandelbrot_seq" --no-symmetry "$@" >/dev/null
+            "$ROOT_DIR/bin/mandelbrot_seq" --no-symmetry "$@" >/dev/null
             ;;
     esac
 

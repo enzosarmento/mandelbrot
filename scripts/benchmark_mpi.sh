@@ -19,6 +19,7 @@ if [ -z "${MODE_NAME:-}" ]; then
 fi
 
 RESULTS_FILE=${RESULTS_FILE:-"$ROOT_DIR/results/benchmark_mpi_${MODE_NAME}.csv"}
+PER_PROCESS_FILE=${PER_PROCESS_FILE:-"$ROOT_DIR/results/benchmark_mpi_${MODE_NAME}_por_processo.csv"}
 ENVIRONMENT_FILE=${ENVIRONMENT_FILE:-"$ROOT_DIR/results/environment_mpi.txt"}
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT HUP INT TERM
@@ -40,19 +41,20 @@ mkdir -p "$(dirname -- "$RESULTS_FILE")"
 } >> "$ENVIRONMENT_FILE"
 
 printf 'modo,repeticao,processos,estrategia,t1_s,tp_s,t_max_s,t_min_s,t_avg_s,t_gather_s,t_reorder_s,t_comm_s,speedup,eficiencia,fator_balanceamento\n' > "$RESULTS_FILE"
+printf 'modo,repeticao,processos,estrategia,rank,tempo_calculo_s,pixels\n' > "$PER_PROCESS_FILE"
 
 for repetition in $(seq 1 "$RUNS"); do
     echo "Executando repeticao $repetition de $RUNS para $MODE_NAME..."
     (
         cd "$TEMP_DIR"
         # Execucao sequencial de referencia (MPI com 1 processo)
-        mpirun -np 1 "$ROOT_DIR/mandelbrot_mpi" $MODE_ARGS > mpi_t1.log
+        mpirun -np 1 "$ROOT_DIR/bin/mandelbrot_mpi" $MODE_ARGS > mpi_t1.log
         t1=$(awk -F': ' '/Tempo de calculo \(Tp\)/ { print $2 }' mpi_t1.log | awk '{print $1}')
 
         for p in $PROCESSES; do
             for strat in $STRATEGIES; do
                 strat_flag="--$strat"
-                mpirun -np "$p" "$ROOT_DIR/mandelbrot_mpi" $MODE_ARGS "$strat_flag" > mpi.log
+                mpirun -np "$p" "$ROOT_DIR/bin/mandelbrot_mpi" $MODE_ARGS "$strat_flag" > mpi.log
                 tp=$(awk -F': ' '/Tempo de calculo \(Tp\)/ { print $2 }' mpi.log | awk '{print $1}')
                 t_gather=$(awk -F': ' '/Tempo de Coleta/ { print $2 }' mpi.log | awk '{print $1}')
                 t_reorder=$(awk -F': ' '/Sobrecarga do Mestre/ { print $2 }' mpi.log | awk '{print $1}')
@@ -69,10 +71,18 @@ for repetition in $(seq 1 "$RUNS"); do
                     "$t1" "$tp" "$t_max" "$t_min" "$t_avg" \
                     "$t_gather" "$t_reorder" "$t_comm" \
                     "$speedup" "$efficiency" "$lbf" >> "$RESULTS_FILE"
+
+                sed -n 's/^  Processo *\([0-9][0-9]*\): \([0-9.][0-9.]*\) s.*| \([0-9][0-9]*\) pixels.*/\1,\2,\3/p' mpi.log | \
+                while IFS=, read -r rank t_rank pixels; do
+                    printf '%s,%s,%s,%s,%s,%s,%s\n' \
+                        "$MODE_NAME" "$repetition" "$p" "$strat" \
+                        "$rank" "$t_rank" "$pixels" >> "$PER_PROCESS_FILE"
+                done
             done
         done
     )
 done
 
 echo "Resultados MPI gravados em $RESULTS_FILE"
+echo "Tempos por processo gravados em $PER_PROCESS_FILE"
 echo "Ambiente registrado em $ENVIRONMENT_FILE"

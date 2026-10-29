@@ -5,9 +5,10 @@ MPIEXEC ?= mpirun
 CFLAGS = -Wall -Wextra -O3 -march=native -ffast-math
 LDLIBS = -lm
 
-TARGET = mandelbrot_mpi
+TARGET = bin/mandelbrot_mpi
 
-OBJS = main_mpi.o mandelbrot.o
+BUILD_DIR = build/mpi
+OBJS = $(BUILD_DIR)/main_mpi.o $(BUILD_DIR)/mandelbrot.o
 OUTPUT_DIR = output
 NP ?= 4
 
@@ -16,13 +17,16 @@ NP ?= 4
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
+	@mkdir -p $(@D)
 	$(MPICC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LDLIBS)
 
-main_mpi.o: main_mpi.c mandelbrot.h
-	$(MPICC) $(CFLAGS) -c main_mpi.c
+$(BUILD_DIR)/main_mpi.o: src/main_mpi.c include/mandelbrot.h
+	@mkdir -p $(@D)
+	$(MPICC) $(CFLAGS) -Iinclude -c $< -o $@
 
-mandelbrot.o: mandelbrot.c mandelbrot.h
-	$(MPICC) $(CFLAGS) -c mandelbrot.c
+$(BUILD_DIR)/mandelbrot.o: src/mandelbrot.c include/mandelbrot.h
+	@mkdir -p $(@D)
+	$(MPICC) $(CFLAGS) -Iinclude -c $< -o $@
 
 ARGS ?=
 
@@ -42,4 +46,5 @@ check: $(TARGET)
 	@NP=$(NP) ./scripts/verify_mpi.sh $(ARGS)
 
 clean:
-	rm -f *.o $(TARGET) $(OUTPUT_DIR)/mandelbrot_mpi.bin $(OUTPUT_DIR)/mandelbrot_mpi.ppm mandelbrot_mpi.bin mandelbrot_mpi.ppm
+	rm -rf $(BUILD_DIR) $(TARGET)
+	rm -f $(OUTPUT_DIR)/mandelbrot_mpi.bin $(OUTPUT_DIR)/mandelbrot_mpi.ppm mandelbrot_mpi.bin mandelbrot_mpi.ppm

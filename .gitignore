@@ -1,18 +1,15 @@
 
 *.o
-mandelbrot_seq
-mandelbrot_openmp
-mandelbrot_mpi
-mandelbrot_runtime
-main_runtime.o
+bin/
+build/
 
 *.bin
 *.pgm
 *.ppm
 
-output/.gitkeep
+output/*
+!output/.gitkeep
 
-apresentacao.md
 .venv/
 __pycache__/
 *.pyc

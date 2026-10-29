@@ -113,7 +113,7 @@ if [ "$BENCHMARK_TYPE" != "strong" ]; then
     exit 1
 fi
 
-THREADS=${THREADS:-"$(seq 2 "$MAX_THREADS" | tr '\n' ' ')"}
+THREADS=${THREADS:-"$(seq 1 "$MAX_THREADS" | tr '\n' ' ')"}
 SCHEDULES=${SCHEDULES:-"static dynamic guided"}
 CHUNKS=${CHUNKS:-"1 16 64"}
 RUNS=${RUNS:-3}
@@ -135,8 +135,8 @@ for threads in $THREADS; do
             exit 1
             ;;
     esac
-    if [ "$threads" -lt 2 ] || [ "$threads" -gt "$MAX_THREADS" ]; then
-        echo "ERRO: cada valor de THREADS deve estar entre 2 e $MAX_THREADS." >&2
+    if [ "$threads" -lt 1 ] || [ "$threads" -gt "$MAX_THREADS" ]; then
+        echo "ERRO: cada valor de THREADS deve estar entre 1 e $MAX_THREADS." >&2
         exit 1
     fi
 done
@@ -160,16 +160,16 @@ for repetition in $(seq 1 "$RUNS"); do
     (
         cd "$TEMP_DIR"
         # A expansão intencional de MODE_ARGS permite passar opções como --seahorse.
-        "$ROOT_DIR/mandelbrot_seq" $MODE_ARGS > sequencial.log
+        "$ROOT_DIR/bin/mandelbrot_seq" $MODE_ARGS > sequencial.log
         t1=$(awk '/Tempo de calculo \(T1\)/ { print $(NF - 1) }' sequencial.log)
 
         for threads in $THREADS; do
             for schedule in $SCHEDULES; do
                 for chunk in $CHUNKS; do
-                    "$ROOT_DIR/mandelbrot_openmp" "$threads" $MODE_ARGS \
+                    "$ROOT_DIR/bin/mandelbrot_openmp" "$threads" $MODE_ARGS \
                         --schedule "$schedule" --chunk "$chunk" > openmp.log
                     tp=$(awk '/Tempo de calculo \(Tp\)/ { print $(NF - 1) }' openmp.log)
-                    lbf=$(awk '/Fator de Balanceamento/ { print $(NF - 1) }' openmp.log)
+                    lbf=$(awk -F': ' '/Fator de Balanceamento/ { print $2 }' openmp.log | awk '{print $1}')
                     speedup=$(awk -v t1="$t1" -v tp="$tp" 'BEGIN { printf "%.9f", t1 / tp }')
                     efficiency=$(awk -v speedup="$speedup" -v threads="$threads" 'BEGIN { printf "%.9f", speedup / threads }')
                     printf '%s,%s,%s,%s,%s,%s,%s,%s,%s,%s\n' \
